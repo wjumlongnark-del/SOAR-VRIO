@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SOAR / VRIO</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=IBM+Plex+Sans+Thai:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#eef3f2;--surf:#ffffff;--ink:#12263a;--mut:#5b6b7a;--line:#d3dde0;--acc:#0b7a75;--acc-t:#ffffff;--soft:#e2f0ee;--warn:#b4570b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a24;--surf:#16263a;--ink:#e6eef5;--mut:#9db0c0;--line:#2b4157;--acc:#3cc2b8;--acc-t:#06222a;--soft:#17383f;--warn:#f0a35e;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1a24;--surf:#16263a;--ink:#e6eef5;--mut:#9db0c0;--line:#2b4157;--acc:#3cc2b8;--acc-t:#06222a;--soft:#17383f;--warn:#f0a35e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 'Sarabun',system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:28px 18px 60px}
+h1,h2,h3{font-family:'IBM Plex Sans Thai','Sarabun',sans-serif;line-height:1.3;margin:0}
+h1{font-size:clamp(26px,5vw,40px);max-width:18ch}
+.lead{color:var(--mut);max-width:60ch;margin:10px 0 26px}
+.step{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}
+.step>h2{font-size:19px;margin-bottom:12px;display:flex;gap:10px;align-items:center}
+.num{background:var(--acc);color:var(--acc-t);width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font-size:15px;flex:none}
+button,.btn{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surf);color:var(--ink);padding:8px 16px;min-height:40px}
+button:hover{border-color:var(--acc)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.pri{background:var(--acc);color:var(--acc-t);border-color:var(--acc);font-weight:700}
+.pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.pick button{text-align:left;padding:16px;border-width:2px}
+.pick button b{display:block;font-size:20px;font-family:'IBM Plex Sans Thai',sans-serif}
+.pick button span{color:var(--mut);font-size:14px}
+.pick button.on{border-color:var(--acc);background:var(--soft)}
+input[type=text],input[type=number]{font:inherit;line-height:1.5;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:44px;width:100%;text-overflow:ellipsis}
+input[type=number]{padding:8px 4px 8px 10px;text-align:center;-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button{opacity:1;margin-left:2px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px}
+fieldset{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0;min-width:0}
+legend{font-weight:700;padding:0 6px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 96px 40px;gap:8px;margin-bottom:8px;align-items:center}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) auto 40px;gap:10px;margin-bottom:8px;align-items:center}
+.vrow .chk{display:flex;gap:6px;flex-wrap:wrap}
+.chk label{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer}
+.chk input{accent-color:var(--acc);width:17px;height:17px}
+.x{padding:0;width:40px;color:var(--warn)}
+.hint{color:var(--mut);font-size:14px;margin:0 0 12px}
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.hide{display:none!important}
+.out{margin-top:8px}
+.tbox{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:14px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px;margin-bottom:16px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+td:first-child,td.l{text-align:left}
+th{background:var(--soft)}
+caption{text-align:left;font-weight:700;padding:4px 0 8px;font-family:'IBM Plex Sans Thai',sans-serif}
+.note{background:var(--soft);border-radius:8px;padding:12px 16px;font-size:15px}
+.note p{margin:0 0 8px}.note p:last-child{margin:0}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px}
+.ch{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.chh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.chh h3{font-size:17px}
+.chh .t{display:flex;gap:10px;align-items:center;font-size:14px}
+.chh button{padding:4px 12px;min-height:34px;font-size:14px}
+.cv{position:relative;height:340px}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.lg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surf)}
+.lg button{border:0;border-radius:0;min-height:38px}
+.lg button.on{background:var(--acc);color:var(--acc-t);font-weight:700}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:15px;z-index:9}
+@media(max-width:560px){.vrow{grid-template-columns:1fr 40px}.vrow .chk{grid-column:1/3;grid-row:2}}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><div class="lg" role="group" aria-label="Language"><button id="lTh" type="button">ไทย</button><button id="lEn" type="button">English</button></div><button id="rst" type="button" data-i="reset"></button></div>
+<h1 data-i="h1"></h1>
+<p class="lead" data-i="lead"></p>
+
+<section class="step"><h2><span class="num">1</span><span data-i="s1"></span></h2>
+<div class="pick">
+<button id="bS" type="button"><b>SOAR Analysis</b><span data-i="bS_d"></span></button>
+<button id="bV" type="button"><b>VRIO Analysis</b><span data-i="bV_d"></span></button>
+</div></section>
+
+<section class="step hide" id="s2"><h2><span class="num">2</span><span data-i="s2"></span></h2>
+<input type="text" id="org" maxlength="120"></section>
+
+<section class="step hide" id="s3"><h2><span class="num">3</span><span data-i="s3"></span></h2>
+<p class="hint" id="hint"></p><div id="inputs"></div>
+<div class="acts"><button class="pri" id="goT" type="button" data-i="goT"></button><button class="pri" id="goC" type="button" data-i="goC"></button></div></section>
+
+<section class="out hide" id="outT"><div class="tbox" id="tableArea"></div>
+<div class="acts"><button id="dlPng" type="button" data-i="dlPng"></button><button id="dlXls" type="button" data-i="dlXls"></button></div></section>
+
+<section class="out hide" id="outC"><h2 style="margin:18px 0 12px" data-i="chT"></h2><div class="charts" id="charts"></div></section>
+</main>
+<div class="toast hide" id="toast"></div>
+
+<script>
+Chart.register(ChartDataLabels);
+const $=s=>document.querySelector(s);
+const PAL=['#0b7a75','#e0a526','#d1495b','#3b6fb6','#7a5195','#6aa84f','#ef8354','#2f4858'];
+const D={
+th:{loc:'th-TH',title:'เครื่องมือวิเคราะห์องค์กร SOAR และ VRIO',h1:'วิเคราะห์องค์กรด้วย SOAR และ VRIO',
+lead:'เลือกวิธีวิเคราะห์ ใส่ชื่อองค์กรและข้อมูล แล้วประมวลผลเป็นตารางสถิติหรือกราฟ พร้อมดาวน์โหลดเป็นรูปภาพและ Excel',
+reset:'รีเซ็ตหน้า',s1:'เลือกรูปแบบการวิเคราะห์',bS_d:'จุดแข็ง โอกาส ความมุ่งหวัง ผลลัพธ์ ให้คะแนนแต่ละประเด็น 0–10',bV_d:'ประเมินทรัพยากรด้วยคุณค่า ความหายาก การลอกเลียนแบบ และการจัดองค์กร',
+s2:'ชื่อหน่วยงานหรือองค์กร',ph:'เช่น โรงพยาบาลชุมชนตัวอย่าง',s3:'กรอกข้อมูลเพื่อวิเคราะห์',goT:'ประมวลผลตาราง',goC:'ประมวลผลกราฟ',
+dlPng:'ดาวน์โหลดตารางเป็น PNG',dlXls:'ดาวน์โหลดตารางเป็น Excel',chT:'กราฟผลการวิเคราะห์',
+hS:'พิมพ์ประเด็นในแต่ละช่อง และให้คะแนนความสำคัญหรือระดับ 0–10 (10 = มากที่สุด)',hV:'พิมพ์ชื่อทรัพยากรหรือความสามารถ แล้วติ๊กเฉพาะเกณฑ์ที่ใช่ (V คุณค่า, R หายาก, I ลอกเลียนยาก, O องค์กรพร้อมใช้)',
+addS:'+ เพิ่มประเด็น',addV:'+ เพิ่มทรัพยากร',newS:'ประเด็นใหม่',newV:'ทรัพยากรใหม่',aI:'ประเด็น',aSc:'คะแนน',aR:'ทรัพยากร',aDel:'ลบ',
+showNum:'แสดงตัวเลข',dlC:'ดาวน์โหลด PNG',saved:'บันทึกไฟล์แล้ว',rstDone:'รีเซ็ตหน้าเรียบร้อยแล้ว',defOrg:'องค์กรตัวอย่าง',fT:'ตาราง',fG:'กราฟ',sheet:'ตารางที่ ',
+QN:{S:'จุดแข็ง (Strengths)',O:'โอกาส (Opportunities)',A:'ความมุ่งหวัง (Aspirations)',R:'ผลลัพธ์ (Results)'},
+QS:{S:'จุดแข็ง',O:'โอกาส',A:'ความมุ่งหวัง',R:'ผลลัพธ์'},
+CR:{V:'คุณค่า (Valuable)',R:'ความหายาก (Rare)',I:'ลอกเลียนยาก (Inimitable)',O:'การจัดองค์กร (Organized)'},
+imp:[['ข้อเสียเปรียบทางการแข่งขัน','ควรปรับปรุงหรือเลิกลงทุน'],['ความเท่าเทียมทางการแข่งขัน','ทำให้องค์กรอยู่รอดได้ แต่ไม่โดดเด่น'],['ข้อได้เปรียบชั่วคราว','คู่แข่งลอกเลียนได้ ต้องพัฒนาต่อเนื่อง'],['ข้อได้เปรียบที่ยังใช้ไม่เต็มที่','ต้องปรับโครงสร้างและระบบให้รองรับ'],['ข้อได้เปรียบที่ยั่งยืน','ควรรักษาและต่อยอดเป็นจุดแข็งหลัก']],
+resT:(m,o)=>`ผลการวิเคราะห์ ${m}: ${o}`,created:'สร้างเมื่อ',
+sc1:'ตารางที่ 1 สถิติสรุปรายด้าน',sh1:['ด้าน','จำนวนประเด็น','ผลรวมคะแนน','ค่าเฉลี่ย','ส่วนเบี่ยงเบนมาตรฐาน','สูงสุด','ต่ำสุด','สัดส่วน (%)'],tot:'รวมทั้งหมด',
+sc2:'ตารางที่ 2 คะแนนรายประเด็นและลำดับ',sh2:['ประเด็น','ด้าน','คะแนน','ร้อยละในด้าน','ลำดับรวม'],
+nS:(t,tm,l,lm,b,bv,o)=>`<p><b>คำอธิบายตาราง:</b> ตารางที่ 1 สรุปจำนวน ผลรวม ค่าเฉลี่ย ส่วนเบี่ยงเบนมาตรฐาน (S.D., ยิ่งสูงแสดงว่าคะแนนในด้านนั้นต่างกันมาก) ค่าสูงสุด ค่าต่ำสุด และสัดส่วนของผลรวมคะแนนแต่ละด้านต่อคะแนนรวม ส่วนตารางที่ 2 จัดอันดับทุกประเด็นจากคะแนนสูงไปต่ำ</p><p><b>ข้อสังเกต:</b> ด้านที่มีค่าเฉลี่ยสูงสุดคือ${t} (${tm}) และต่ำสุดคือ${l} (${lm}) ประเด็นที่ได้คะแนนสูงสุดคือ “${b}” ${bv} ควรนำจุดแข็งและโอกาสมาสนับสนุนความมุ่งหวัง เพื่อให้บรรลุผลลัพธ์ตามเป้าหมายของ ${o}</p>`,
+vc1:'ตารางที่ 1 ผลการประเมินรายทรัพยากร',vh1:['ทรัพยากร','V','R','I','O','คะแนน (0–4)','ผลต่อการแข่งขัน','ข้อเสนอแนะ'],
+vc2:'ตารางที่ 2 สถิติรายเกณฑ์',vh2:['เกณฑ์','จำนวนที่ใช่','จำนวนที่ไม่ใช่','ร้อยละที่ใช่'],
+vc3:'ตารางที่ 3 การกระจายผลการแข่งขัน',vh3:['ผลต่อการแข่งขัน','จำนวนทรัพยากร','ร้อยละ'],
+nV:(o,n,s,p)=>`<p><b>คำอธิบายตาราง:</b> ตอบ “ใช่” (✓) หรือ “ไม่ใช่” (✗) ตามลำดับ V → R → I → O ถ้าไม่ผ่านเกณฑ์ใดให้หยุดตีความที่เกณฑ์นั้น: ไม่มีคุณค่า = ข้อเสียเปรียบ, มีคุณค่าแต่ไม่หายาก = เท่าเทียม, หายากแต่ลอกเลียนได้ = ได้เปรียบชั่วคราว, ลอกเลียนยากแต่องค์กรยังไม่พร้อม = ใช้ไม่เต็มที่, ผ่านทั้งหมด = ได้เปรียบอย่างยั่งยืน</p><p><b>ข้อสังเกต:</b> ${o} มีทรัพยากรทั้งหมด ${n} รายการ เป็นข้อได้เปรียบที่ยั่งยืน ${s} รายการ (${p}%)</p>`,
+cS:['ผลรวมคะแนนรายด้าน (แท่ง)','สัดส่วนคะแนนรายด้าน (โดนัท)','ค่าเฉลี่ยรายด้าน (เรดาร์)','จำนวนประเด็นรายด้าน (พาย)','ค่าเฉลี่ย สูงสุด ต่ำสุด (เส้น)','คะแนนรายประเด็น เรียงลำดับ (แท่งนอน)','คะแนนเฉลี่ยรายด้าน (โพลาร์)'],
+cV:['จำนวนที่ใช่และไม่ใช่รายเกณฑ์ (แท่งซ้อน)','ร้อยละที่ใช่รายเกณฑ์ (เรดาร์)','การกระจายผลต่อการแข่งขัน (โดนัท)','คะแนน VRIO รายทรัพยากร (แท่งนอน)','ร้อยละที่ใช่รายเกณฑ์ (เส้น)','ผลต่อการแข่งขัน (พาย)','จำนวนที่ใช่รายเกณฑ์ (โพลาร์)'],
+lSum:'ผลรวมคะแนน',lMean:'ค่าเฉลี่ย',lMax:'สูงสุด',lMin:'ต่ำสุด',lScore:'คะแนน',lYes:'ใช่',lNo:'ไม่ใช่',lPct:'ร้อยละที่ใช่',lS4:'คะแนน 0–4',
+sS:{S:[['ทีมงานมีความเชี่ยวชาญสูง',8],['ชื่อเสียงและความน่าเชื่อถือ',7]],O:[['นโยบายภาครัฐสนับสนุน',7],['เทคโนโลยีดิจิทัลเข้าถึงง่าย',6]],A:[['เป็นองค์กรต้นแบบด้านบริการ',9],['ขยายเครือข่ายความร่วมมือ',7]],R:[['ความพึงพอใจของผู้รับบริการเพิ่มขึ้น',8],['ต้นทุนการดำเนินงานลดลง',6]]},
+sV:[['ระบบเทคโนโลยีสารสนเทศ',1,0,0,1],['บุคลากรผู้เชี่ยวชาญเฉพาะทาง',1,1,0,1],['วัฒนธรรมองค์กรและตราสินค้า',1,1,1,1],['ฐานข้อมูลลูกค้าเฉพาะ',1,1,1,0]]},
+en:{loc:'en-US',title:'SOAR and VRIO Analysis Tool',h1:'Analyze your organization with SOAR and VRIO',
+lead:'Choose a method, enter the organization name and data, then process it into statistical tables or charts. Download the results as images or Excel.',
+reset:'Reset page',s1:'Choose the analysis type',bS_d:'Strengths, Opportunities, Aspirations, Results. Score each item from 0 to 10',bV_d:'Assess resources by Value, Rarity, Imitability and Organization',
+s2:'Organization name',ph:'e.g. Sample Community Hospital',s3:'Enter data for analysis',goT:'Process table',goC:'Process charts',
+dlPng:'Download table as PNG',dlXls:'Download table as Excel',chT:'Analysis charts',
+hS:'Type each item and give it a score from 0 to 10 (10 = highest).',hV:'Type a resource or capability, then tick only the criteria that apply (V Valuable, R Rare, I hard to Imitate, O Organized to capture value).',
+addS:'+ Add item',addV:'+ Add resource',newS:'New item',newV:'New resource',aI:'Item',aSc:'Score',aR:'Resource',aDel:'Delete',
+showNum:'Show numbers',dlC:'Download PNG',saved:'File saved',rstDone:'Page has been reset',defOrg:'Sample Organization',fT:'Table',fG:'Chart',sheet:'Table ',
+QN:{S:'Strengths',O:'Opportunities',A:'Aspirations',R:'Results'},
+QS:{S:'Strengths',O:'Opportunities',A:'Aspirations',R:'Results'},
+CR:{V:'Valuable (V)',R:'Rare (R)',I:'Inimitable (I)',O:'Organized (O)'},
+imp:[['Competitive disadvantage','Improve it or stop investing'],['Competitive parity','Keeps the organization alive but not distinctive'],['Temporary competitive advantage','Competitors can copy it; keep developing'],['Unused competitive advantage','Adjust structure and systems to exploit it'],['Sustained competitive advantage','Protect it and build on it as a core strength']],
+resT:(m,o)=>`${m} analysis results: ${o}`,created:'Created on',
+sc1:'Table 1 Summary statistics by dimension',sh1:['Dimension','Items','Total score','Mean','Std. deviation','Max','Min','Share (%)'],tot:'Total',
+sc2:'Table 2 Item scores and ranking',sh2:['Item','Dimension','Score','% within dimension','Overall rank'],
+nS:(t,tm,l,lm,b,bv,o)=>`<p><b>About the tables:</b> Table 1 summarizes the number of items, total, mean, standard deviation (S.D.; higher means scores within that dimension differ more), maximum, minimum, and each dimension’s share of the overall score. Table 2 ranks every item from highest to lowest score.</p><p><b>Observations:</b> The dimension with the highest mean is ${t} (${tm}) and the lowest is ${l} (${lm}). The top-scoring item is “${b}” ${bv}. ${o} should use its strengths and opportunities to support its aspirations and so reach its intended results.</p>`,
+vc1:'Table 1 Assessment by resource',vh1:['Resource','V','R','I','O','Score (0–4)','Competitive implication','Recommendation'],
+vc2:'Table 2 Statistics by criterion',vh2:['Criterion','Yes','No','% Yes'],
+vc3:'Table 3 Distribution of competitive implications',vh3:['Competitive implication','Resources','%'],
+nV:(o,n,s,p)=>`<p><b>About the tables:</b> Answer yes (✓) or no (✗) in the order V → R → I → O and stop at the first criterion that fails: not valuable = disadvantage; valuable but not rare = parity; rare but imitable = temporary advantage; hard to imitate but not organized = unused advantage; all four = sustained advantage.</p><p><b>Observations:</b> ${o} assessed ${n} resources, of which ${s} (${p}%) are sustained competitive advantages.</p>`,
+cS:['Total score by dimension (bar)','Share of score by dimension (doughnut)','Mean by dimension (radar)','Number of items by dimension (pie)','Mean, max and min (line)','Item scores ranked (horizontal bar)','Mean by dimension (polar area)'],
+cV:['Yes and no by criterion (stacked bar)','% Yes by criterion (radar)','Distribution of implications (doughnut)','VRIO score by resource (horizontal bar)','% Yes by criterion (line)','Competitive implications (pie)','Yes count by criterion (polar area)'],
+lSum:'Total score',lMean:'Mean',lMax:'Max',lMin:'Min',lScore:'Score',lYes:'Yes',lNo:'No',lPct:'% Yes',lS4:'Score 0–4',
+sS:{S:[['Highly skilled team',8],['Reputation and credibility',7]],O:[['Supportive government policy',7],['Accessible digital technology',6]],A:[['Become a service model organization',9],['Expand partnership network',7]],R:[['Higher client satisfaction',8],['Lower operating costs',6]]},
+sV:[['Information technology system',1,0,0,1],['Specialized expert staff',1,1,0,1],['Organizational culture and brand',1,1,1,1],['Proprietary customer database',1,1,1,0]]}};
+let lang='th',mode=null,dirty=false,tableOn=false,chartsOn=false,charts=[],soar,vrio;
+const L=()=>D[lang];
+const clone=o=>JSON.parse(JSON.stringify(o));
+function loadSamples(){soar=clone(L().sS);vrio=clone(L().sV)}
+loadSamples();
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.remove('hide');clearTimeout(toast.k);toast.k=setTimeout(()=>t.classList.add('hide'),2600)}
+async function saveFile(name,data){
+  try{const d=await (window.claude&&claude.use?claude.use('downloads'):null);
+    if(d){await d.save({filename:name,data});toast(L().saved);return}
+  }catch(e){if(e&&e.code==='declined')return}
+  const b=data instanceof Blob?data:new Blob([data]);const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+const orgName=()=>($('#org').value.trim()||L().defOrg);
+const fn=s=>s.replace(/[\\/:*?"<>|\s]+/g,'_');
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const M=()=>mode==='S'?'SOAR':'VRIO';
+
+/* ---------- language, reset, mode ---------- */
+function applyLang(){
+  const d=L();document.documentElement.lang=lang;document.title=d.title;
+  document.querySelectorAll('[data-i]').forEach(e=>e.textContent=d[e.dataset.i]);
+  $('#org').placeholder=d.ph;
+  $('#lTh').classList.toggle('on',lang==='th');$('#lEn').classList.toggle('on',lang==='en');
+  $('#lTh').setAttribute('aria-pressed',lang==='th');$('#lEn').setAttribute('aria-pressed',lang==='en');
+  if(mode){$('#hint').textContent=mode==='S'?d.hS:d.hV;renderIn()}
+}
+function setLang(l){if(l===lang)return;lang=l;if(!dirty)loadSamples();applyLang();
+  if(tableOn)buildTable(false);if(chartsOn)buildCharts(false)}
+$('#lTh').onclick=()=>setLang('th');$('#lEn').onclick=()=>setLang('en');
+$('#rst').onclick=()=>{
+  charts.forEach(c=>c.destroy());charts=[];mode=null;dirty=false;tableOn=chartsOn=false;
+  loadSamples();$('#org').value='';$('#tableArea').innerHTML='';$('#charts').innerHTML='';$('#inputs').innerHTML='';
+  ['#s2','#s3','#outT','#outC'].forEach(s=>$(s).classList.add('hide'));
+  $('#bS').classList.remove('on');$('#bV').classList.remove('on');
+  window.scrollTo({top:0,behavior:'smooth'});toast(L().rstDone);
+};
+function pick(m){mode=m;$('#bS').classList.toggle('on',m==='S');$('#bV').classList.toggle('on',m==='V');
+  ['#s2','#s3'].forEach(s=>$(s).classList.remove('hide'));
+  $('#outT').classList.add('hide');$('#outC').classList.add('hide');tableOn=chartsOn=false;
+  $('#hint').textContent=m==='S'?L().hS:L().hV;renderIn()}
+$('#bS').onclick=()=>pick('S');$('#bV').onclick=()=>pick('V');
+
+function renderIn(){
+  const d=L(),box=$('#inputs');
+  if(mode==='S'){
+    box.innerHTML='<div class="grid4">'+Object.keys(d.QN).map(k=>`<fieldset><legend>${d.QN[k]}</legend>${soar[k].map((r,i)=>`<div class="row"><input type="text" value="${esc(r[0])}" data-k="${k}" data-i="${i}" data-f="0" aria-label="${d.aI}"><input type="number" min="0" max="10" step="0.5" value="${r[1]}" data-k="${k}" data-i="${i}" data-f="1" aria-label="${d.aSc}"><button class="x" type="button" data-del="${k}:${i}" aria-label="${d.aDel}">×</button></div>`).join('')}<button type="button" data-add="${k}">${d.addS}</button></fieldset>`).join('')+'</div>';
+  }else{
+    box.innerHTML=vrio.map((r,i)=>`<div class="vrow"><input type="text" value="${esc(r[0])}" data-i="${i}" data-f="0" aria-label="${d.aR}"><div class="chk">${['V','R','I','O'].map((c,j)=>`<label><input type="checkbox" ${r[j+1]?'checked':''} data-i="${i}" data-f="${j+1}">${c}</label>`).join('')}</div><button class="x" type="button" data-del="${i}" aria-label="${d.aDel}">×</button></div>`).join('')+`<button type="button" data-add="v">${d.addV}</button>`;
+  }
+}
+$('#inputs').addEventListener('input',e=>{const t=e.target,f=t.dataset.f;if(f===undefined)return;dirty=true;
+  if(mode==='S'){soar[t.dataset.k][t.dataset.i][f]=f==='1'?Math.max(0,Math.min(10,+t.value||0)):t.value}
+  else vrio[t.dataset.i][f]=f==='0'?t.value:(t.checked?1:0)});
+$('#inputs').addEventListener('click',e=>{const t=e.target;
+  if(t.dataset.add){dirty=true;if(mode==='S')soar[t.dataset.add].push([L().newS,5]);else vrio.push([L().newV,1,0,0,0]);renderIn()}
+  if(t.dataset.del!==undefined){dirty=true;if(mode==='S'){const[k,i]=t.dataset.del.split(':');soar[k].splice(+i,1)}else vrio.splice(+t.dataset.del,1);renderIn()}});
+
+/* ---------- statistics ---------- */
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const mean=a=>a.length?sum(a)/a.length:0;
+const sd=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(sum(a.map(x=>(x-m)**2))/(a.length-1))};
+const f2=n=>(Math.round(n*100)/100).toFixed(2);
+const tbl=(cap,head,rows)=>`<div class="scroll"><table><caption>${cap}</caption><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+function soarStats(){
+  const ks=['S','O','A','R'],all=sum(ks.map(k=>sum(soar[k].map(r=>+r[1]))));
+  const q=ks.map(k=>{const v=soar[k].map(r=>+r[1]);return{k,n:v.length,sum:sum(v),mean:mean(v),sd:sd(v),max:v.length?Math.max(...v):0,min:v.length?Math.min(...v):0,share:all?sum(v)/all*100:0}});
+  const items=[];ks.forEach(k=>soar[k].forEach(r=>items.push({k,name:r[0],v:+r[1]})));
+  const sorted=[...items].sort((a,b)=>b.v-a.v);items.forEach(it=>it.rank=sorted.indexOf(it)+1);
+  return{q,items,all,total:items.length};
+}
+const vIdx=r=>!r[1]?0:!r[2]?1:!r[3]?2:!r[4]?3:4;
+function vrioStats(){
+  const rows=vrio.map(r=>({n:r[0],c:[r[1],r[2],r[3],r[4]],score:r[1]+r[2]+r[3]+r[4],idx:vIdx(r)}));
+  const crit=['V','R','I','O'].map((k,j)=>{const y=sum(rows.map(r=>r.c[j]));return{k,yes:y,no:rows.length-y,pct:rows.length?y/rows.length*100:0}});
+  const dist={};rows.forEach(r=>dist[r.idx]=(dist[r.idx]||0)+1);
+  return{rows,crit,dist};
+}
+
+/* ---------- table ---------- */
+function buildTable(scroll){
+  const d=L(),org=orgName();
+  let h=`<h2 style="font-size:22px">${d.resT(M(),esc(org))}</h2><p class="hint">${d.created} ${new Date().toLocaleDateString(d.loc,{dateStyle:'long'})}</p>`;
+  if(mode==='S'){const s=soarStats();
+    h+=tbl(d.sc1,d.sh1,s.q.map(x=>[d.QN[x.k],x.n,f2(x.sum),f2(x.mean),f2(x.sd),f2(x.max),f2(x.min),f2(x.share)]).concat([[d.tot,s.total,f2(s.all),f2(s.total?s.all/s.total:0),'-','-','-','100.00']]));
+    h+=tbl(d.sc2,d.sh2,s.items.map(i=>{const qs=s.q.find(x=>x.k===i.k).sum;return[esc(i.name),d.QS[i.k],f2(i.v),f2(qs?i.v/qs*100:0),i.rank]}));
+    const top=[...s.q].sort((a,b)=>b.mean-a.mean)[0],low=[...s.q].sort((a,b)=>a.mean-b.mean)[0],best=s.items.find(i=>i.rank===1);
+    h+=`<div class="note">${d.nS(d.QS[top.k],f2(top.mean),d.QS[low.k],f2(low.mean),esc(best?best.name:'-'),best?`(${f2(best.v)})`:'',esc(org))}</div>`;
+  }else{const s=vrioStats();
+    h+=tbl(d.vc1,d.vh1,s.rows.map(r=>[esc(r.n),...r.c.map(c=>c?'✓':'✗'),r.score,d.imp[r.idx][0],d.imp[r.idx][1]]));
+    h+=tbl(d.vc2,d.vh2,s.crit.map(c=>[d.CR[c.k],c.yes,c.no,f2(c.pct)]));
+    h+=tbl(d.vc3,d.vh3,Object.keys(s.dist).sort().map(k=>[d.imp[k][0],s.dist[k],f2(s.dist[k]/s.rows.length*100)]));
+    const sus=s.dist[4]||0;
+    h+=`<div class="note">${d.nV(esc(org),s.rows.length,sus,f2(s.rows.length?sus/s.rows.length*100:0))}</div>`;
+  }
+  $('#tableArea').innerHTML=h;$('#outT').classList.remove('hide');tableOn=true;
+  if(scroll)$('#outT').scrollIntoView({behavior:'smooth'});
+}
+$('#goT').onclick=()=>buildTable(true);
+$('#dlPng').onclick=async()=>{
+  const c=await html2canvas($('#tableArea'),{backgroundColor:getComputedStyle(document.body).getPropertyValue('--surf').trim()||'#fff',scale:2});
+  c.toBlob(b=>saveFile(`${L().fT}_${M()}_${fn(orgName())}.png`,b));
+};
+$('#dlXls').onclick=()=>{
+  const wb=XLSX.utils.book_new();
+  document.querySelectorAll('#tableArea table').forEach((t,i)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(t),L().sheet+(i+1)));
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  saveFile(`${L().fT}_${M()}_${fn(orgName())}.xlsx`,new Blob([buf]));
+};
+
+/* ---------- charts ---------- */
+const bgPlugin={id:'bg',beforeDraw(c){const x=c.ctx;x.save();x.globalCompositeOperation='destination-over';x.fillStyle=getComputedStyle(document.body).getPropertyValue('--surf').trim()||'#fff';x.fillRect(0,0,c.width,c.height);x.restore()}};
+function mk(type,labels,datasets,o={}){
+  const round=['doughnut','pie','polarArea'].includes(type);
+  const dl=round?{color:'#fff',backgroundColor:'rgba(0,0,0,.5)',borderRadius:4,padding:3,font:{weight:'bold'},formatter:o.fmt}:{anchor:'end',align:'end',color:getComputedStyle(document.body).color,font:{weight:'bold'},formatter:o.fmt};
+  datasets.forEach((d,i)=>{if(!d.backgroundColor)d.backgroundColor=round||o.multi?labels.map((_,j)=>PAL[j%PAL.length]):PAL[i%PAL.length];
+    if(!d.borderColor&&(type==='line'||type==='radar'))d.borderColor=PAL[i%PAL.length];
+    if(type==='radar')d.backgroundColor=PAL[i%PAL.length]+'44';if(type==='line'){d.backgroundColor=PAL[i%PAL.length];d.tension=.3}});
+  const opt={responsive:true,maintainAspectRatio:false,layout:{padding:{top:22,right:o.h?30:12}},plugins:{legend:{display:datasets.length>1||round},datalabels:dl},...(o.h?{indexAxis:'y'}:{})};
+  if(['bar','line'].includes(type))opt.scales={x:{stacked:!!o.stack,grid:{display:false}},y:{beginAtZero:true,stacked:!!o.stack,...(o.max?{max:o.max}:{})}};
+  if(o.h)opt.scales={x:{beginAtZero:true,max:o.max,stacked:!!o.stack},y:{stacked:!!o.stack}};
+  if(type==='radar')opt.scales={r:{beginAtZero:true,...(o.max?{max:o.max}:{}),ticks:{backdropColor:'transparent'}}};
+  return{type,data:{labels,datasets},options:opt};
+}
+function chartList(){
+  const d=L(),T=mode==='S'?d.cS:d.cV,out=[];
+  if(mode==='S'){const s=soarStats(),lb=s.q.map(x=>d.QS[x.k]),it=[...s.items].sort((a,b)=>b.v-a.v);
+    out.push([T[0],mk('bar',lb,[{label:d.lSum,data:s.q.map(x=>x.sum)}],{multi:1})]);
+    out.push([T[1],mk('doughnut',lb,[{data:s.q.map(x=>+f2(x.share))}],{fmt:v=>v+'%'})]);
+    out.push([T[2],mk('radar',lb,[{label:d.lMean,data:s.q.map(x=>+f2(x.mean))}],{max:10})]);
+    out.push([T[3],mk('pie',lb,[{data:s.q.map(x=>x.n)}])]);
+    out.push([T[4],mk('line',lb,[{label:d.lMean,data:s.q.map(x=>+f2(x.mean))},{label:d.lMax,data:s.q.map(x=>x.max)},{label:d.lMin,data:s.q.map(x=>x.min)}],{max:10})]);
+    out.push([T[5],mk('bar',it.map(i=>i.name),[{label:d.lScore,data:it.map(i=>i.v)}],{h:1,max:10})]);
+    out.push([T[6],mk('polarArea',lb,[{data:s.q.map(x=>+f2(x.mean))}])]);
+  }else{const s=vrioStats(),lb=s.crit.map(c=>c.k),dk=Object.keys(s.dist).sort();const dn=dk.map(k=>d.imp[k][0]),dv=dk.map(k=>s.dist[k]);
+    out.push([T[0],mk('bar',lb,[{label:d.lYes,data:s.crit.map(c=>c.yes),backgroundColor:PAL[0]},{label:d.lNo,data:s.crit.map(c=>c.no),backgroundColor:PAL[2]}],{stack:1})]);
+    out.push([T[1],mk('radar',lb,[{label:d.lPct,data:s.crit.map(c=>+f2(c.pct))}],{max:100,fmt:v=>v+'%'})]);
+    out.push([T[2],mk('doughnut',dn,[{data:dv}])]);
+    out.push([T[3],mk('bar',s.rows.map(r=>r.n),[{label:d.lS4,data:s.rows.map(r=>r.score)}],{h:1,max:4})]);
+    out.push([T[4],mk('line',lb,[{label:d.lPct,data:s.crit.map(c=>+f2(c.pct))}],{max:100})]);
+    out.push([T[5],mk('pie',dn,[{data:dv}])]);
+    out.push([T[6],mk('polarArea',lb,[{data:s.crit.map(c=>c.yes)}])]);
+  }
+  return out;
+}
+function buildCharts(scroll){
+  const d=L();charts.forEach(c=>c.destroy());charts=[];
+  Chart.defaults.color=getComputedStyle(document.body).color;Chart.defaults.font.family="'Sarabun',sans-serif";Chart.defaults.font.size=13;
+  Chart.defaults.borderColor=getComputedStyle(document.body).getPropertyValue('--line').trim();
+  const list=chartList();
+  $('#charts').innerHTML=list.map((c,i)=>`<div class="ch"><div class="chh"><h3>${c[0]}</h3><div class="t"><label><input type="checkbox" checked data-t="${i}"> ${d.showNum}</label><button type="button" data-d="${i}">${d.dlC}</button></div></div><div class="cv"><canvas id="cv${i}" role="img" aria-label="${c[0]}"></canvas></div></div>`).join('');
+  list.forEach((c,i)=>{c[1].plugins=[bgPlugin];c[1].options.plugins.title={display:true,text:orgName(),font:{size:14}};charts.push(new Chart($('#cv'+i),c[1]))});
+  $('#outC').classList.remove('hide');chartsOn=true;
+  if(scroll)$('#outC').scrollIntoView({behavior:'smooth'});
+}
+$('#goC').onclick=()=>buildCharts(true);
+$('#charts').addEventListener('change',e=>{const i=e.target.dataset.t;if(i===undefined)return;const c=charts[i];c.options.plugins.datalabels.display=e.target.checked;c.update()});
+$('#charts').addEventListener('click',e=>{const i=e.target.dataset.d;if(i===undefined)return;
+  charts[i].canvas.toBlob(b=>saveFile(`${L().fG}${+i+1}_${M()}_${fn(orgName())}.png`,b))});
+applyLang();
+</script>
+</body>
+</html>
